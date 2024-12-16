@@ -1,0 +1,40 @@
+import asyncio
+import websockets
+import json
+
+# Replace with the WebSocket URL of the blockchain service
+WEBSOCKET_URL = "wss://mainnet.infura.io/ws/v3/YOUR_INFURA_PROJECT_ID"
+
+async def handle_blockchain_updates():
+    async with websockets.connect(WEBSOCKET_URL) as websocket:
+        # Subscribe to a blockchain event (e.g., new block on Ethereum)
+        subscription_message = {
+            "jsonrpc": "2.0",
+            "method": "eth_subscribe",
+            "params": ["newHeads"],  # Subscribing to new blocks on Ethereum
+            "id": 1
+        }
+        await websocket.send(json.dumps(subscription_message))
+        print("Subscribed to new block updates")
+
+        # Listen for blockchain updates
+        while True:
+            response = await websocket.recv()
+            data = json.loads(response)
+            
+            # Process the received update
+            if "params" in data:
+                block = data["params"]["result"]
+                print("New block received:")
+                print(f"Block Hash: {block['hash']}")
+                print(f"Block Number: {int(block['number'], 16)}")  # Ethereum block number is hex
+                print(f"Block Timestamp: {block['timestamp']}")
+            else:
+                print(f"Received unexpected data: {data}")
+
+async def main():
+    await handle_blockchain_updates()
+
+# Run the asyncio event loop
+if __name__ == "__main__":
+    asyncio.run(main())
